@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*', // 请根据您的Laravel API地址修改
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,  
       },
     ];
   },

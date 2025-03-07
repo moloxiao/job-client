@@ -43,13 +43,13 @@ export const apiService = {
   // 获取任务列表
   getJobs: async () => {
     try {
-      console.log('Calling API: /api/v1/jobs/list');
+      console.log('Calling API: /api/v1/jobs');
       
       // 获取当前 token 以便调试
       const token = Cookies.get('token');
       console.log('Token used for request:', token ? `${token.substring(0, 10)}...` : 'No token');
       
-      const response = await api.get('/api/v1/jobs/list');
+      const response = await api.get('/api/v1/jobs');
       console.log('API Response:', response);
       
       // 根据 Laravel API 的实际响应结构可能需要调整

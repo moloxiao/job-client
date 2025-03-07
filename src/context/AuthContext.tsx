@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const response = await axios.post(`http://localhost:8000/api/v1/auth/login`, {
+      const response = await axios.post(`/api/v1/auth/login`, {
         email,
         password
       });
