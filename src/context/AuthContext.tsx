@@ -4,7 +4,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
-// 定义类型
+// Define types
 interface User {
   email: string;
 }
@@ -17,32 +17,32 @@ interface AuthContextType {
   error: string | null;
 }
 
-// 创建上下文
+// Create authentication context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 我们将使用相对路径，通过Next.js代理访问API（127.0.0.1:800）
+// We will use a relative path to access the API via Next.js proxy (127.0.0.1:800)
 
-// 提供者组件
+// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // 验证令牌并获取用户信息
+  // Verify token and fetch user info
   useEffect(() => {
     const checkUserAuthentication = async () => {
-      // 先检查 Cookie
+      // First, check the cookie
       let token = Cookies.get('token');
       let email = Cookies.get('user_email');
       
       if (token) {
         console.log('Token found during authentication check');
         try {
-          // 这里可以添加一个验证令牌的API调用，如果您的Laravel API提供了这样的端点
-          // 例如: const response = await axios.get(`/api/v1/auth/user`, {...})
+          // Here, you can add an API call to validate the token if your Laravel API provides such an endpoint
+          // Example: const response = await axios.get(`/api/v1/auth/user`, {...})
           
-          // 简化起见，我们这里只检查令牌是否存在
+          // For simplicity, we are just checking if the token exists
           setUser({ email: email || '' });
         } catch (error) {
           console.error('Error verifying token:', error);
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkUserAuthentication();
   }, []);
 
-  // 登录函数
+  // Login function
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -71,10 +71,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
-      // 调试日志，查看响应结构
+      // Debug log to check response structure
       console.log('Login response:', response.data);
       
-      // 获取 token (根据 Laravel API 的实际响应结构可能需要调整)
+      // Retrieve token (may need to adjust based on Laravel API response structure)
       let token;
       if (response.data.token) {
         token = response.data.token;
@@ -84,43 +84,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token = response.data.access_token;
       } else {
         console.error('Token not found in response', response.data);
-        setError('登录成功但未找到访问令牌，请联系管理员');
+        setError('Login successful but no access token found. Please contact the administrator.');
         setLoading(false);
         return;
       }
       
-      // 确保我们有一个有效的令牌
+      // Ensure we have a valid token
       if (!token) {
         console.error('Token is empty or invalid');
-        setError('获取的令牌无效，请联系管理员');
+        setError('Invalid token received. Please contact the administrator.');
         setLoading(false);
         return;
       }
       
       console.log('Token before setting cookie:', token);
       
-      // 明确设置 cookie 选项
+      // Explicitly set cookie options
       const cookieOptions = { 
-        expires: 1, // 1天后过期
-        path: '/',  // 整个站点可用
-        secure: window.location.protocol === 'https:', // 在HTTPS连接上设置secure
-        sameSite: 'strict' as const // 防止CSRF攻击
+        expires: 1, // Expires in 1 day
+        path: '/',  // Available throughout the site
+        secure: window.location.protocol === 'https:', // Secure flag for HTTPS connections
+        sameSite: 'strict' as const // Prevents CSRF attacks
       };
       
-      // 清除任何可能存在的旧令牌
+      // Remove any existing token
       Cookies.remove('token');
       
-      // 设置新令牌
+      // Set new token
       Cookies.set('token', token, cookieOptions);
       Cookies.set('user_email', email, cookieOptions);
       
-      // 立即验证令牌是否已设置
+      // Immediately verify if the token is saved
       const savedToken = Cookies.get('token');
       console.log('Token immediately after setting:', savedToken ? 'Token saved successfully' : 'Failed to save token');
       
       if (!savedToken) {
         console.error('Token could not be saved to cookies');
-        setError('无法保存身份验证令牌到浏览器，请检查浏览器设置');
+        setError('Failed to store authentication token in the browser. Please check your browser settings.');
         setLoading(false);
         return;
       }
@@ -129,13 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.response?.data?.message || '登录失败，请检查您的凭据');
+      setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 登出函数
+  // Logout function
   const logout = () => {
     Cookies.remove('token');
     Cookies.remove('user_email');
@@ -150,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// 自定义钩子以在组件中使用
+// Custom hook to use authentication context in components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   
