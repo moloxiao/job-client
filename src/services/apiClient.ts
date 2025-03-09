@@ -1,14 +1,14 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-// 创建axios实例，用于Next.js前端与Next.js API路由的通信
+// Create axios instance for communication between Next.js frontend and Next.js API routes
 const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// 请求拦截器 - 添加认证token
+// Request interceptor - add authentication token
 apiClient.interceptors.request.use(
   (config) => {
     const token = Cookies.get('token');
@@ -25,15 +25,15 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 响应拦截器 - 统一错误处理
+// Response interceptor - unified error handling
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // 处理401未授权错误
+    // Handle 401 unauthorized error
     if (error.response && error.response.status === 401) {
-      // 可以在这里进行重定向到登录页面或自动刷新token的逻辑
+      // Logic for redirecting to login page or automatically refreshing token can be added here
       console.error('Authentication error: Unauthorized');
     }
     

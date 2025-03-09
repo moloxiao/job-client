@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// 创建axios实例，用于Next.js API路由与Laravel后端的通信
+// Create axios instance for communication between Next.js API routes and Laravel backend
 const serverApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   headers: {
@@ -8,13 +8,13 @@ const serverApi = axios.create({
   },
 });
 
-// 添加响应拦截器
+// Add response interceptor
 serverApi.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // 服务器端日志记录
+    // Server-side logging
     console.error('Server API error:', {
       url: error.config?.url,
       status: error.response?.status,
@@ -25,9 +25,9 @@ serverApi.interceptors.response.use(
   }
 );
 
-// 服务器端API工具函数
+// Server-side API utility functions
 export const serverApiHelpers = {
-  // 转发请求到Laravel API，保留原始请求头
+  // Forward request to Laravel API, preserving original request headers
   forwardRequest: async (
     method: string, 
     endpoint: string, 
@@ -36,16 +36,16 @@ export const serverApiHelpers = {
     params: Record<string, string> = {}
   ) => {
     try {
-      // 构建请求配置
+      // Build request configuration
       const config = {
         method,
-        url: `/api/${endpoint}`, // 注意这里使用相对路径
+        url: `/api/${endpoint}`, // Note that we use a relative path here
         headers,
         ...(data && { data }),
-        ...(Object.keys(params).length > 0 && { params }) // 添加查询参数
+        ...(Object.keys(params).length > 0 && { params }) // Add query parameters
       };
       
-      // 记录请求信息（开发环境调试用）
+      // Log request information (for development environment debugging)
       if (process.env.NODE_ENV === 'development') {
         console.log(`[ServerAPI] ${method.toUpperCase()} ${endpoint}`, {
           headers: Object.keys(headers),
@@ -55,11 +55,11 @@ export const serverApiHelpers = {
         });
       }
       
-      // 发送请求
+      // Send request
       const response = await serverApi(config);
       return response.data;
     } catch (error: any) {
-      // 处理并传递错误
+      // Handle and pass along error
       console.error(`Failed to forward ${method} request to ${endpoint}`, error);
       throw error;
     }

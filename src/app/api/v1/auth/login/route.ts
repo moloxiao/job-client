@@ -3,17 +3,17 @@ import { serverApiHelpers } from '@/lib/serverApi';
 
 export async function POST(request: Request) {
   try {
-    // 获取请求数据
+    // Get request data
     const body = await request.json();
     
-    // 使用通用的转发工具函数
+    // Use generic forwarding utility function
     const data = await serverApiHelpers.forwardRequest('post', 'v1/auth/login', body);
     
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Login API error:', error.response?.data || error.message);
     
-    // 返回适当的错误响应
+    // Return appropriate error response
     return NextResponse.json(
       { message: error.response?.data?.message || 'Authentication failed' },
       { status: error.response?.status || 500 }

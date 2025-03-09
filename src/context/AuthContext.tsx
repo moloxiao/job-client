@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Logout function
   const logout = () => {
-    // 可以考虑在这里调用登出API
+    // TODO : call service side logout api
     // apiService.auth.logout();
     
     Cookies.remove('token');

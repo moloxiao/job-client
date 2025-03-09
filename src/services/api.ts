@@ -1,10 +1,10 @@
 import apiClient from './apiClient';
 
-// 业务逻辑API服务
+// Business logic API service
 const apiService = {
-  // 用户认证
+  // User authentication
   auth: {
-    // 用户登录
+    // User login
     login: async (email: string, password: string) => {
       try {
         const response = await apiClient.post('/api/v1/auth/login', { email, password });
@@ -15,7 +15,7 @@ const apiService = {
       }
     },
     
-    // 用户登出
+    // User logout
     logout: async () => {
       try {
         const response = await apiClient.post('/api/v1/auth/logout');
@@ -26,7 +26,7 @@ const apiService = {
       }
     },
     
-    // 获取当前用户信息
+    // Get current user information
     getCurrentUser: async () => {
       try {
         const response = await apiClient.get('/api/v1/auth/user');
@@ -38,14 +38,14 @@ const apiService = {
     }
   },
   
-  // 工作相关
+  // Job related
   jobs: {
-    // 获取工作列表
+    // Get job list
     getAll: async (params?: any) => {
       try {
         const response = await apiClient.get('/api/v1/jobs', { params });
         
-        // 根据实际API响应结构处理返回数据
+        // Process return data according to the actual API response structure
         if (response.data.data && Array.isArray(response.data.data)) {
           return response.data.data;
         }
@@ -57,7 +57,7 @@ const apiService = {
       }
     },
     
-    // 获取单个工作详情
+    // Get single job details
     getById: async (id: number | string) => {
       try {
         const response = await apiClient.get(`/api/v1/jobs/${id}`);
@@ -68,7 +68,7 @@ const apiService = {
       }
     },
     
-    // 创建新工作
+    // Create new job
     create: async (jobData: any) => {
       try {
         const response = await apiClient.post('/api/v1/jobs', jobData);
@@ -80,7 +80,7 @@ const apiService = {
     }
   }
   
-  // 可以添加更多业务模块，如用户管理、设置等
+  // Can add more business modules, such as user management, settings, etc.
 };
 
 export default apiService;

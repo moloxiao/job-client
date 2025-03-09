@@ -20,13 +20,13 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 如果未登录且已完成认证检查，重定向到登录页面
+    // If not logged in and authentication check is complete, redirect to login page
     if (!user && !authLoading) {
       router.push('/login');
       return;
     }
 
-    // 如果已登录，获取任务列表
+    // If logged in, fetch job list
     if (user) {
       fetchJobs();
     }
@@ -36,13 +36,13 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     
-    // 检查 token 是否存在
+    // Check if token exists
     const token = Cookies.get('token');
     console.log('Current token in cookie:', token ? `${token.substring(0, 10)}...` : 'No token');
     
     try {
       console.log('Fetching jobs...');
-      // 使用新的架构中的API服务获取工作列表
+      // Use API service from the new architecture to get job list
       const data = await apiService.jobs.getAll();
       console.log('Jobs data received:', data);
       setJobs(data);
@@ -53,16 +53,16 @@ export default function DashboardPage() {
         console.log('Unauthorized, redirecting to login');
         router.push('/login');
       } else {
-        // 展示更详细的错误信息
+        // Show more detailed error information
         const errorMessage = err.response?.data?.message || err.message;
-        setError(`获取任务列表时出错：${errorMessage} (状态码: ${err.response?.status || '未知'})`);
+        setError(`Error fetching job list: ${errorMessage} (Status code: ${err.response?.status || 'Unknown'})`);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // 显示加载状态
+  // Show loading state
   if (authLoading || loading) {
     return (
       <div>
@@ -74,9 +74,9 @@ export default function DashboardPage() {
     );
   }
 
-  // 确保用户已登录
+  // Make sure user is logged in
   if (!user) {
-    return null; // 这里不需要显示任何内容，因为我们已经重定向到登录页面
+    return null; // No need to display anything here as we already redirected to login page
   }
 
   return (
@@ -86,7 +86,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white overflow-hidden shadow-xl sm:rounded-lg">
           <div className="p-6 bg-white border-b border-gray-200">
-            <h1 className="text-2xl font-semibold text-gray-900">任务列表</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Job List</h1>
             
             {error && (
               <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
@@ -113,7 +113,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="mt-6 text-center text-gray-500">
-                没有找到任务。
+                No jobs found.
               </div>
             )}
             
@@ -122,7 +122,7 @@ export default function DashboardPage() {
                 onClick={fetchJobs}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                刷新
+                Refresh
               </button>
             </div>
           </div>
