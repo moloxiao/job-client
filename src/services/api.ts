@@ -1,74 +1,86 @@
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import apiClient from './apiClient';
 
-// Use relative path to access API via Next.js proxy (127.0.0.1:800)
-// Create an axios instance
-const api = axios.create({
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor - Add authentication token
-api.interceptors.request.use(
-  (config) => {
-    // Attempt to retrieve the token from cookies
-    let token = Cookies.get('token');
+// 业务逻辑API服务
+const apiService = {
+  // 用户认证
+  auth: {
+    // 用户登录
+    login: async (email: string, password: string) => {
+      try {
+        const response = await apiClient.post('/api/v1/auth/login', { email, password });
+        return response.data;
+      } catch (error: any) {
+        console.error('Login failed:', error.response?.data?.message || error.message);
+        throw error;
+      }
+    },
     
-    if (token && config.headers) {
-      // Ensure the Authorization header is correctly formatted
-      config.headers['Authorization'] = `Bearer ${token}`;
-      
-      // Debugging info
-      console.log('Adding token to request headers');
-    } else {
-      console.log('No token found in cookies or localStorage');
+    // 用户登出
+    logout: async () => {
+      try {
+        const response = await apiClient.post('/api/v1/auth/logout');
+        return response.data;
+      } catch (error) {
+        console.error('Logout failed');
+        throw error;
+      }
+    },
+    
+    // 获取当前用户信息
+    getCurrentUser: async () => {
+      try {
+        const response = await apiClient.get('/api/v1/auth/user');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch user info');
+        throw error;
+      }
     }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// API functions
-export const apiService = {
-  // User login
-  login: async (email: string, password: string) => {
-    const response = await api.post('/api/v1/auth/login', { email, password });
-    return response.data;
   },
   
-  // Fetch job list
-  getJobs: async () => {
-    try {
-      console.log('Calling API: /api/v1/jobs');
-      
-      // Retrieve the current token for debugging purposes
-      const token = Cookies.get('token');
-      console.log('Token used for request:', token ? `${token.substring(0, 10)}...` : 'No token');
-      
-      const response = await api.get('/api/v1/jobs');
-      console.log('API Response:', response);
-      
-      // Adjust according to the actual response structure of the Laravel API
-      // Some APIs return {data: [...]} while others return an array directly
-      if (response.data.data && Array.isArray(response.data.data)) {
-        return response.data.data;
+  // 工作相关
+  jobs: {
+    // 获取工作列表
+    getAll: async (params?: any) => {
+      try {
+        const response = await apiClient.get('/api/v1/jobs', { params });
+        
+        // 根据实际API响应结构处理返回数据
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+        
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch jobs');
+        throw error;
       }
-      
-      return response.data;
-    } catch (error: any) {
-      console.error('API error details:', error.response || error);
-      
-      // If an unauthorized error (401) occurs, throw a specific error for handling in components
-      if (error.response && error.response.status === 401) {
-        throw new Error('UNAUTHORIZED');
+    },
+    
+    // 获取单个工作详情
+    getById: async (id: number | string) => {
+      try {
+        const response = await apiClient.get(`/api/v1/jobs/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Failed to fetch job #${id}`);
+        throw error;
       }
-      throw error;
+    },
+    
+    // 创建新工作
+    create: async (jobData: any) => {
+      try {
+        const response = await apiClient.post('/api/v1/jobs', jobData);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to create job');
+        throw error;
+      }
     }
-  },
+  }
+  
+  // 可以添加更多业务模块，如用户管理、设置等
 };
 
 export default apiService;

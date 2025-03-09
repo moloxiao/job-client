@@ -1,162 +1,109 @@
-"use client";
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import Cookies from 'js-cookie';
+'use client';
+
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
-// Define types
-interface User {
+type FormData = {
   email: string;
-}
+  password: string;
+};
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  error: string | null;
-}
-
-// Create context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// We will use a relative path and access the API via Next.js proxy (127.0.0.1:800)
-
-// Provider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function LoginPage() {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+  const { login, error, user, loading } = useAuth();
   const router = useRouter();
 
-  // Validate token and retrieve user information
+  // 如果用户已登录，重定向到仪表板
   useEffect(() => {
-    const checkUserAuthentication = async () => {
-      // First, check the cookie
-      let token = Cookies.get('token');
-      let email = Cookies.get('user_email');
-      
-      if (token) {
-        console.log('Token found during authentication check');
-        try {
-          // Here, you can add an API call to validate the token if your Laravel API provides such an endpoint
-          // Example: const response = await axios.get(`/api/v1/auth/user`, {...})
-          
-          // For simplicity, we only check if the token exists
-          setUser({ email: email || '' });
-        } catch (error) {
-          console.error('Error verifying token:', error);
-          Cookies.remove('token');
-          Cookies.remove('user_email');
-          setUser(null);
-        }
-      } else {
-        console.log('No token found during authentication check');
-      }
-      
-      setLoading(false);
-    };
-
-    checkUserAuthentication();
-  }, []);
-
-  // Login function
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await axios.post(`/api/v1/auth/login`, {
-        email,
-        password
-      });
-      
-      // Debug log to check response structure
-      console.log('Login response:', response.data);
-      
-      // Retrieve token (adjust according to the actual Laravel API response structure)
-      let token;
-      if (response.data.token) {
-        token = response.data.token;
-      } else if (response.data.data && response.data.data.token) {
-        token = response.data.data.token;
-      } else if (response.data.access_token) {
-        token = response.data.access_token;
-      } else {
-        console.error('Token not found in response', response.data);
-        setError('Login successful, but access token not found. Please contact the administrator.');
-        setLoading(false);
-        return;
-      }
-      
-      // Ensure we have a valid token
-      if (!token) {
-        console.error('Token is empty or invalid');
-        setError('Invalid access token received. Please contact the administrator.');
-        setLoading(false);
-        return;
-      }
-      
-      console.log('Token before setting cookie:', token);
-      
-      // Explicitly set cookie options
-      const cookieOptions = { 
-        expires: 1, // Expires in 1 day
-        path: '/',  // Available across the entire site
-        secure: window.location.protocol === 'https:', // Set secure flag for HTTPS connections
-        sameSite: 'strict' as const // Prevent CSRF attacks
-      };
-      
-      // Remove any existing token
-      Cookies.remove('token');
-      
-      // Set the new token
-      Cookies.set('token', token, cookieOptions);
-      Cookies.set('user_email', email, cookieOptions);
-      
-      // Immediately verify if the token is set
-      const savedToken = Cookies.get('token');
-      console.log('Token immediately after setting:', savedToken ? 'Token saved successfully' : 'Failed to save token');
-      
-      if (!savedToken) {
-        console.error('Token could not be saved to cookies');
-        setError('Failed to save authentication token in the browser. Please check your browser settings.');
-        setLoading(false);
-        return;
-      }
-      
-      setUser({ email });
+    if (user && !loading) {
       router.push('/dashboard');
-    } catch (error: any) {
-      console.error('Login error:', error);
-      setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
     }
+  }, [user, loading, router]);
+
+  const onSubmit = async (data: FormData) => {
+    await login(data.email, data.password);
   };
 
-  // Logout function
-  const logout = () => {
-    Cookies.remove('token');
-    Cookies.remove('user_email');
-    setUser(null);
-    router.push('/login');
-  };
+  // 显示加载状态
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, error }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900">登录</h1>
+          <p className="mt-2 text-gray-600">登录您的账户以访问任务列表</p>
+        </div>
 
-// Custom hook to use in components
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
-};
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              邮箱
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              {...register('email', { 
+                required: '邮箱是必填项', 
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: '请输入有效的邮箱地址'
+                }
+              })}
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              密码
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              {...register('password', { required: '密码是必填项' })}
+            />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            )}
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={loading}
+            >
+              {loading ? '登录中...' : '登录'}
+            </button>
+          </div>
+
+          <div className="text-center text-sm text-gray-600">
+            <p>测试账号: hello@gmail.com</p>
+            <p>测试密码: HelloApiV1</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

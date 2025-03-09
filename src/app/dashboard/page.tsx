@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import apiService from '@/services/api';
 import Navbar from '@/components/Navbar';
 import Cookies from 'js-cookie';
-import CookieDebug from '@/components/CookieDebug';
 
 interface Job {
   id: number;
@@ -43,7 +42,8 @@ export default function DashboardPage() {
     
     try {
       console.log('Fetching jobs...');
-      const data = await apiService.getJobs();
+      // 使用新的架构中的API服务获取工作列表
+      const data = await apiService.jobs.getAll();
       console.log('Jobs data received:', data);
       setJobs(data);
     } catch (err: any) {

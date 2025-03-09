@@ -1,8 +1,8 @@
 "use client";
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import apiService from '@/services/api';
 
 // Define types
 interface User {
@@ -19,8 +19,6 @@ interface AuthContextType {
 
 // Create authentication context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// We will use a relative path to access the API via Next.js proxy (127.0.0.1:800)
 
 // AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,10 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (token) {
         console.log('Token found during authentication check');
         try {
-          // Here, you can add an API call to validate the token if your Laravel API provides such an endpoint
-          // Example: const response = await axios.get(`/api/v1/auth/user`, {...})
+          // 这里可以添加验证token的API调用
+          // 例如: const userData = await apiService.auth.getCurrentUser();
           
-          // For simplicity, we are just checking if the token exists
+          // 简化起见，我们只检查token是否存在
           setUser({ email: email || '' });
         } catch (error) {
           console.error('Error verifying token:', error);
@@ -66,24 +64,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const response = await axios.post(`/api/v1/auth/login`, {
-        email,
-        password
-      });
+      // 使用新的api服务进行登录
+      const response = await apiService.auth.login(email, password);
       
       // Debug log to check response structure
-      console.log('Login response:', response.data);
+      console.log('Login response:', response);
       
-      // Retrieve token (may need to adjust based on Laravel API response structure)
+      // Retrieve token (may need to adjust based on API response structure)
       let token;
-      if (response.data.token) {
+      if (response.token) {
+        token = response.token;
+      } else if (response.data && response.data.token) {
         token = response.data.token;
-      } else if (response.data.data && response.data.data.token) {
-        token = response.data.data.token;
-      } else if (response.data.access_token) {
-        token = response.data.access_token;
+      } else if (response.access_token) {
+        token = response.access_token;
       } else {
-        console.error('Token not found in response', response.data);
+        console.error('Token not found in response', response);
         setError('Login successful but no access token found. Please contact the administrator.');
         setLoading(false);
         return;
@@ -129,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(error.response?.data?.message || error.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +133,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Logout function
   const logout = () => {
+    // 可以考虑在这里调用登出API
+    // apiService.auth.logout();
+    
     Cookies.remove('token');
     Cookies.remove('user_email');
     setUser(null);
